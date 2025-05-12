@@ -1,0 +1,215 @@
+import React, { useState, useEffect } from "react"
+import {
+  Box,
+  Button,
+  Container,
+  Grid,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material"
+import DeleteIcon from "@mui/icons-material/Delete"
+import AddIcon from "@mui/icons-material/Add"
+
+const InventoryPage = () => {
+  const [inventory, setInventory] = useState([])
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    price: "",
+    category: "",
+    stock: "",
+    image: "",
+  })
+  const API_URL = "http://localhost:8000/api/products/"  // Ajusta si es necesario
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(API_URL)
+        const data = await res.json()
+        setInventory(data)
+      } catch (err) {
+        console.error("Error al obtener el inventario:", err)
+      }
+    }
+  
+    fetchData()
+  }, [])
+  
+  
+  
+
+  const handleAddProduct = async () => {
+    if (!newProduct.name || !newProduct.price || !newProduct.category || !newProduct.stock) return
+  
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newProduct,
+          price: parseFloat(newProduct.price),
+          stock: parseInt(newProduct.stock),
+        }),
+      })
+      const savedProduct = await res.json()
+      setInventory(prev => [...prev, savedProduct])
+      setNewProduct({ name: "", price: "", category: "", stock: "", image: "" })
+    } catch (err) {
+      console.error("Error al agregar producto:", err)
+    }
+  }
+  
+  
+  
+
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`http://localhost:8000/api/products/${id}/`, {
+        method: "DELETE",
+      })
+      setInventory((prev) => prev.filter((item) => item.id !== id))
+    } catch (error) {
+      console.error("Error al eliminar producto:", error)
+      alert("No se pudo eliminar el producto.")
+    }
+  }
+  
+
+  const handleUpdateStock = async (id, newStock) => {
+    try {
+      const updatedStock = parseInt(newStock)
+      await fetch(`http://localhost:8000/api/products/${id}/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ stock: updatedStock }),
+      })
+  
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, stock: updatedStock } : item
+        )
+      )
+    } catch (error) {
+      console.error("Error al actualizar stock:", error)
+      alert("No se pudo actualizar el stock.")
+    }
+  }
+  
+
+  return (
+    <Box sx={{ py: 4 }}>
+      <Container maxWidth="lg">
+
+        <Paper sx={{ p: 2, mb: 4 }}>
+          <Grid container spacing={6}>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Nombre"
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={2}>
+              <TextField
+                fullWidth
+                label="Precio"
+                type="number"
+                value={newProduct.price}
+                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={2}>
+              <TextField
+                fullWidth
+                label="Categoría"
+                value={newProduct.category}
+                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={2}>
+              <TextField
+                fullWidth
+                label="Stock"
+                type="number"
+                value={newProduct.stock}
+                onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={2}>
+              <TextField
+                fullWidth
+                label="URL Imagen"
+                value={newProduct.image}
+                onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={1}>
+              <IconButton color="primary" onClick={handleAddProduct}>
+                <AddIcon />
+              </IconButton>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        <Paper sx={{ p: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Imagen</TableCell>
+                <TableCell>Nombre</TableCell>
+                <TableCell>Categoría</TableCell>
+                <TableCell>Precio</TableCell>
+                <TableCell>Stock</TableCell>
+                <TableCell>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {inventory.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.name} width={50} />
+                    ) : (
+                      "N/A"
+                    )}
+                  </TableCell>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell>${product.price}</TableCell>
+                  <TableCell>
+                    <TextField
+                      type="number"
+                      value={product.stock}
+                      onChange={(e) => handleUpdateStock(product.id, e.target.value)}
+                      size="small"
+                      sx={{ width: 80 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleDelete(product.id)} color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      </Container>
+    </Box>
+  )
+}
+
+export default InventoryPage
+
