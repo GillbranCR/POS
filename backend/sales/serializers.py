@@ -25,7 +25,7 @@ class SaleSerializer(serializers.ModelSerializer):
         return f"${obj.total:.2f}"
 
     def create(self, validated_data):
-        items_data = validated_data.pop('detalles')
+        items_data = validated_data.pop('items')
         user = validated_data.pop('user', None)
         subtotal = Decimal('0.00')
 
@@ -39,7 +39,8 @@ class SaleSerializer(serializers.ModelSerializer):
         total = subtotal + tax
 
         # Crear la venta
-        sale = Sale.objects.create(**validated_data)
+        sale = Sale.objects.create(user=user, **validated_data)
+
 
         # Crear items y registrar movimiento de stock
         for item_data in items_data:

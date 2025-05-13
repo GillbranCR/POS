@@ -21,12 +21,12 @@ const InventoryPage = () => {
   const [inventory, setInventory] = useState([])
   const [newProduct, setNewProduct] = useState({
     name: "",
-    price: "",
-    category: "",
+    sku: "",           
     stock: "",
-    image: "",
+    category: "",
+    image_url: "",
   })
-  const API_URL = "http://localhost:8000/api/products/"  // Ajusta si es necesario
+  const API_URL = "http://localhost:8000/api/inventory/products/"  // Ajusta si es necesario
 
 
   useEffect(() => {
@@ -57,6 +57,8 @@ const InventoryPage = () => {
           ...newProduct,
           price: parseFloat(newProduct.price),
           stock: parseInt(newProduct.stock),
+          image_url: newProduct.image_url,
+          sku: newProduct.sku,
         }),
       })
       const savedProduct = await res.json()
@@ -72,7 +74,7 @@ const InventoryPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:8000/api/products/${id}/`, {
+      await fetch(`http://localhost:8000/api/inventory/products/${id}/`, {
         method: "DELETE",
       })
       setInventory((prev) => prev.filter((item) => item.id !== id))
@@ -86,7 +88,7 @@ const InventoryPage = () => {
   const handleUpdateStock = async (id, newStock) => {
     try {
       const updatedStock = parseInt(newStock)
-      await fetch(`http://localhost:8000/api/products/${id}/`, {
+      await fetch(`http://localhost:8000/api/inventory/products/${id}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -118,6 +120,14 @@ const InventoryPage = () => {
                 label="Nombre"
                 value={newProduct.name}
                 onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="sku"
+                value={newProduct.sku}
+                onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
               />
             </Grid>
             <Grid item xs={2}>
@@ -185,7 +195,7 @@ const InventoryPage = () => {
                     )}
                   </TableCell>
                   <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.category_name}</TableCell>
                   <TableCell>${product.price}</TableCell>
                   <TableCell>
                     <TextField

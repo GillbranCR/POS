@@ -24,7 +24,7 @@ const SalesPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/products/")
+    fetch("http://localhost:8000/api/inventory/products/")
       .then((res) => res.json())
       .then((data) => {
         setProducts(data)
@@ -99,7 +99,7 @@ const SalesPage = () => {
       for (const item of cart) {
         const newStock = item.product.stock - item.quantity
 
-        await fetch(`http://localhost:8000/api/products/${item.product.id}/`, {
+        await fetch(`http://localhost:8000/api/inventory/products/${item.product.id}/`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -112,7 +112,7 @@ const SalesPage = () => {
       clearCart()
 
       // Recargar productos desde el backend con el stock actualizado
-      const res = await fetch("http://localhost:8000/api/products/")
+      const res = await fetch("http://localhost:8000/api/inventory/products/")
       const updated = await res.json()
       setProducts(updated)
     } catch (error) {
@@ -135,7 +135,7 @@ const SalesPage = () => {
     }
   
     try {
-      const res = await fetch("http://localhost:8000/api/sales/", {
+      const res = await fetch("http://localhost:8000/api/sales/sale", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -152,7 +152,7 @@ const SalesPage = () => {
       clearCart()
   
       // Recargar productos actualizados
-      const updatedRes = await fetch("http://localhost:8000/api/products/")
+      const updatedRes = await fetch("http://localhost:8000/api/inventory/products/")
       const updatedData = await updatedRes.json()
       setProducts(updatedData)
     } catch (err) {

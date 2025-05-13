@@ -26,7 +26,7 @@ export default function OrdersPage() {
   };
 
   const handleSave = () => {
-    fetch(`http://localhost:8000/api/sales/${selectedOrder.id}/`, {
+    fetch(`http://localhost:8000/api/sales/sale/${selectedOrder.id}/`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export default function OrdersPage() {
   );
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/sales/')
+    fetch('http://localhost:8000/api/sales/sale/')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
