@@ -25,7 +25,7 @@ class SaleSerializer(serializers.ModelSerializer):
         return f"${obj.total:.2f}"
 
     def create(self, validated_data):
-        items_data = validated_data.pop('items')
+        items_data = validated_data.pop('detalles')
         user = validated_data.pop('user', None)
         subtotal = Decimal('0.00')
 

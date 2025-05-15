@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createTheme, styled } from '@mui/material/styles';
 import { Dashboard } from '@mui/icons-material';
-import { ShoppingCart, PointOfSale, Inventory } from '@mui/icons-material';
+import { ShoppingCart, PointOfSale, Inventory, Category } from '@mui/icons-material';
 import { BarChart } from '@mui/icons-material';
 import { Description } from '@mui/icons-material';
 import { Layers } from '@mui/icons-material';
@@ -12,6 +12,7 @@ import DashboardPage from '../pages/DashboardPage';
 import SalesPage from '../pages/SalesPage';
 import OrdersPage from '../pages/OrdersPage'; // Asegúrate de que la ruta sea correcta
 import InventoryPage from '../pages/InventoryPage';
+import CategoriesPage from '../pages/CategoriesPage';
 
 
 
@@ -39,6 +40,11 @@ const NAVIGATION = [
     segment: 'inventory',
     title: 'Inventory',
     icon: <Inventory />
+  },
+  {
+    segment: 'categories',
+    title: 'Categories',
+    icon: <Category />
   },
   {
     kind: 'divider',
@@ -114,23 +120,24 @@ export default function DashboardLayoutBasic(props) {
   const router = useDemoRouter('/dashboard');
 
   const renderPageContent = () => {
+    const commonProps = { router };
+  
     switch (router.pathname) {
       case '/dashboard':
-        return (
-          <DashboardPage />
-        );
+        return <DashboardPage {...commonProps} />;
       case '/sales':
-        return <SalesPage />;
+        return <SalesPage {...commonProps} />;
       case '/orders':
-        return <OrdersPage />;
+        return <OrdersPage {...commonProps} />;
       case '/inventory':
-        return <InventoryPage />;
-        
-      // Aquí puedes agregar más cases para otras páginas si quieres.
+        return <InventoryPage {...commonProps} />;
+      case '/categories':
+        return <CategoriesPage {...commonProps} />;
       default:
         return <Skeleton height={400} />;
     }
   };
+  
 
   // Remove this const when copying and pasting into your project.
   //const demoWindow = window ? window() : undefined;

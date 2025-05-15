@@ -81,7 +81,7 @@ export default function OrdersPage() {
   );
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/sales/sale/')
+    fetch('http://localhost:8000/api/sales/sales/')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();

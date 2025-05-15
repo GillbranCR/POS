@@ -135,7 +135,7 @@ const SalesPage = () => {
     }
   
     try {
-      const res = await fetch("http://localhost:8000/api/sales/sale", {
+      const res = await fetch("http://localhost:8000/api/sales/sales/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -220,7 +220,7 @@ const SalesPage = () => {
                   }
                 >
                   <img
-                    src={product.image_url}
+                    src={product.image_url || null}
                     alt={product.name}
                     style={{
                       width: 60,

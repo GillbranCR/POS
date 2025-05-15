@@ -12,12 +12,16 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete"
 import AddIcon from "@mui/icons-material/Add"
 
-const InventoryPage = () => {
+export default function InventoryPage({ router }) {
+
   const [inventory, setInventory] = useState([])
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -42,6 +46,18 @@ const InventoryPage = () => {
   
     fetchData()
   }, [])
+
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await fetch("http://localhost:8000/api/inventory/categories/")
+      const data = await res.json()
+      setCategories(data)
+    }
+    fetchCategories()
+  }, [])
+
   
   
   
@@ -57,6 +73,7 @@ const InventoryPage = () => {
           ...newProduct,
           price: parseFloat(newProduct.price),
           stock: parseInt(newProduct.stock),
+          category: parseInt(newProduct.category),
           image_url: newProduct.image_url,
           sku: newProduct.sku,
         }),
@@ -113,6 +130,14 @@ const InventoryPage = () => {
       <Container maxWidth="lg">
 
         <Paper sx={{ p: 2, mb: 4 }}>
+          <Button
+            variant="outlined"
+            sx={{ mb: 2 }}
+            onClick={() => router.navigate('/categories')}
+          >
+            Crear nueva categoría
+          </Button>
+
           <Grid container spacing={6}>
             <Grid item xs={3}>
               <TextField
@@ -140,12 +165,19 @@ const InventoryPage = () => {
               />
             </Grid>
             <Grid item xs={2}>
-              <TextField
-                fullWidth
-                label="Categoría"
-                value={newProduct.category}
-                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-              />
+              <FormControl fullWidth>
+                <InputLabel id="category-label">Categoría</InputLabel>
+                <Select
+                  labelId="category-label"
+                  value={newProduct.category}
+                  label="Categoría"
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                >
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={2}>
               <TextField
@@ -221,5 +253,4 @@ const InventoryPage = () => {
   )
 }
 
-export default InventoryPage
 
