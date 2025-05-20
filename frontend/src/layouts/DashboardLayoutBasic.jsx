@@ -13,6 +13,7 @@ import SalesPage from '../pages/SalesPage';
 import OrdersPage from '../pages/OrdersPage'; // Asegúrate de que la ruta sea correcta
 import InventoryPage from '../pages/InventoryPage';
 import CategoriesPage from '../pages/CategoriesPage';
+import ReportsPage from '../pages/ReportsPage';
 
 
 
@@ -133,6 +134,8 @@ export default function DashboardLayoutBasic(props) {
         return <InventoryPage {...commonProps} />;
       case '/categories':
         return <CategoriesPage {...commonProps} />;
+      case '/reports/sales':
+        return <ReportsPage {...commonProps} />;
       default:
         return <Skeleton height={400} />;
     }
