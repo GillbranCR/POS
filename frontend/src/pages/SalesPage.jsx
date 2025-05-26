@@ -132,6 +132,7 @@ const SalesPage = () => {
       })),
       total: subtotal + tax,
       tax: tax,
+      status: "pending",
     }
   
     try {
@@ -183,6 +184,7 @@ const SalesPage = () => {
                 <TextField
                   select
                   fullWidth
+                  sx={{minWidth: 120}}
                   label="Category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}

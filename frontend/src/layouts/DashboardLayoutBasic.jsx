@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createTheme, styled } from '@mui/material/styles';
 import { Dashboard } from '@mui/icons-material';
-import { ShoppingCart, PointOfSale, Inventory, Category } from '@mui/icons-material';
+import { ShoppingCart, PointOfSale, Inventory, Category, LocalShipping } from '@mui/icons-material';
 import { BarChart } from '@mui/icons-material';
 import { Description } from '@mui/icons-material';
 import { Layers } from '@mui/icons-material';
@@ -14,6 +14,7 @@ import OrdersPage from '../pages/OrdersPage'; // Asegúrate de que la ruta sea c
 import InventoryPage from '../pages/InventoryPage';
 import CategoriesPage from '../pages/CategoriesPage';
 import ReportsPage from '../pages/ReportsPage';
+import SuppliersPage from '../pages/SuppliersPage';
 
 
 
@@ -76,6 +77,18 @@ const NAVIGATION = [
     title: 'Integrations',
     icon: <Layers />,
   },
+  {
+    kind: 'divider',
+  },
+  {
+    kind: 'header',
+    title: 'Suppliers',
+  },
+  {
+    segment: 'suppliers',
+    title: 'Suppliers',
+    icon: <LocalShipping />,
+  },
 ];
 
 const demoTheme = createTheme({
@@ -136,6 +149,8 @@ export default function DashboardLayoutBasic(props) {
         return <CategoriesPage {...commonProps} />;
       case '/reports/sales':
         return <ReportsPage {...commonProps} />;
+      case '/suppliers':
+        return <SuppliersPage {...commonProps} />;
       default:
         return <Skeleton height={400} />;
     }

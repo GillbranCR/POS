@@ -3,7 +3,7 @@ import {
   Grid, Paper, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, Select, MenuItem, InputLabel, FormControl, TextField,
-  TablePagination, Box,
+  TablePagination, Box, Chip
 } from '@mui/material';
 
 export default function OrdersPage() {
@@ -13,10 +13,26 @@ export default function OrdersPage() {
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [originalStatus, setOriginalStatus] = React.useState('');
+
+
+  const getStatusChip = (status) => {
+    switch (status) {
+      case 'pending':
+        return <Chip label="Pendiente" color="warning" />;
+      case 'completed':
+        return <Chip label="Enviado" color="success" />;
+      case 'cancelled':
+        return <Chip label="Cancelado" color="error" />;
+      default:
+        return <Chip label={status || 'Desconocido'} />;
+    }
+  };
 
   const handleOpenDetails = (order) => {
     setSelectedOrder({ ...order });
+    setOriginalStatus(order.status);
     setOpen(true);
   };
 
@@ -26,7 +42,7 @@ export default function OrdersPage() {
   };
 
   const handleSave = () => {
-    fetch(`http://localhost:8000/api/sales/sale/${selectedOrder.id}/`, {
+    fetch(`http://localhost:8000/api/sales/sales/${selectedOrder.id}/`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -94,6 +110,32 @@ export default function OrdersPage() {
       });
   }, []);
 
+  const cancelarVenta = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/sales/sales/${id}/update_status/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "cancelled" }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.detail || "Error al cancelar venta")
+      }
+
+      alert("Venta cancelada")
+      // Actualizar lista
+      setOrders((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s))
+      )
+    } catch (err) {
+      console.error("Error:", err)
+      alert("Error al cancelar venta")
+    }
+  }
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -138,15 +180,27 @@ export default function OrdersPage() {
                   <TableCell>{order.client_name}</TableCell>
                   <TableCell>{order.date}</TableCell>
                   <TableCell>${parseFloat(order.total).toFixed(2)}</TableCell>
-                  <TableCell>{order.status || 'N/A'}</TableCell>
+                  <TableCell>{getStatusChip(order.status)}</TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"
                       onClick={() => handleOpenDetails(order)}
+                      sx={{ mr: 1 }}
                     >
                       Ver Detalles
                     </Button>
+                    {order.status !== 'cancelled' && order.status !== 'completed' && (
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => cancelarVenta(order.id)}
+                      >
+                        Cancelar
+                      </Button>
+                    )}
+
                   </TableCell>
+
                 </TableRow>
               ))}
               {paginatedOrders.length === 0 && (
@@ -192,10 +246,11 @@ export default function OrdersPage() {
                       status: e.target.value,
                     })
                   }
+                  disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'completed'}
                 >
-                  <MenuItem value="Pending">Pendiente</MenuItem>
-                  <MenuItem value="Shipped">Enviado</MenuItem>
-                  <MenuItem value="Cancelled">Cancelado</MenuItem>
+                  <MenuItem value="pending">Pendiente</MenuItem>
+                  <MenuItem value="completed">Enviado</MenuItem>
+                  <MenuItem value="cancelled">Cancelado</MenuItem>
                 </Select>
               </FormControl>
 
@@ -211,10 +266,12 @@ export default function OrdersPage() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSave} variant="contained">
-            Guardar cambios
-          </Button>
+          <Button onClick={handleClose}>Cerrar</Button>
+          {(originalStatus !== 'Cancelled' && originalStatus !== 'Shipped') && (
+            <Button onClick={handleSave} variant="contained">
+              Guardar cambios
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Grid>

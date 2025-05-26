@@ -165,7 +165,7 @@ export default function InventoryPage({ router }) {
               />
             </Grid>
             <Grid item xs={2}>
-              <FormControl fullWidth>
+              <FormControl fullWidth sx={{minWidth: 180}}>
                 <InputLabel id="category-label">Categoría</InputLabel>
                 <Select
                   labelId="category-label"
