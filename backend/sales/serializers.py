@@ -27,6 +27,8 @@ class SaleSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop('detalles')
         user = validated_data.pop('user', None)
+        status = validated_data.get('status', 'completed')
+        validated_data['status'] = status
         subtotal = Decimal('0.00')
 
         # Calcular total e impuestos

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createTheme, styled } from '@mui/material/styles';
 import { Dashboard } from '@mui/icons-material';
-import { ShoppingCart, PointOfSale, Inventory, Category, LocalShipping } from '@mui/icons-material';
+import { ShoppingCart, PointOfSale, Inventory, Category, LocalShipping, LibraryBooks } from '@mui/icons-material';
 import { BarChart } from '@mui/icons-material';
 import { Description } from '@mui/icons-material';
 import { Layers } from '@mui/icons-material';
@@ -15,7 +15,7 @@ import InventoryPage from '../pages/InventoryPage';
 import CategoriesPage from '../pages/CategoriesPage';
 import ReportsPage from '../pages/ReportsPage';
 import SuppliersPage from '../pages/SuppliersPage';
-
+import InvoicesPage from '../pages/InvoicesPage';
 
 
 const NAVIGATION = [
@@ -73,9 +73,9 @@ const NAVIGATION = [
     ],
   },
   {
-    segment: 'integrations',
-    title: 'Integrations',
-    icon: <Layers />,
+    segment: 'invoices',
+    title: 'Invoices',
+    icon: <LibraryBooks />,
   },
   {
     kind: 'divider',
@@ -149,6 +149,8 @@ export default function DashboardLayoutBasic(props) {
         return <CategoriesPage {...commonProps} />;
       case '/reports/sales':
         return <ReportsPage {...commonProps} />;
+      case '/invoices':
+        return <InvoicesPage {...commonProps} />;
       case '/suppliers':
         return <SuppliersPage {...commonProps} />;
       default:

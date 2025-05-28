@@ -15,7 +15,10 @@ export default function OrdersPage() {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [originalStatus, setOriginalStatus] = React.useState('');
-
+  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [cancelReason, setCancelReason] = React.useState("return");
+  const [orderToCancel, setOrderToCancel] = React.useState(null);
+  
 
   const getStatusChip = (status) => {
     switch (status) {
@@ -30,6 +33,7 @@ export default function OrdersPage() {
     }
   };
 
+  
   const handleOpenDetails = (order) => {
     setSelectedOrder({ ...order });
     setOriginalStatus(order.status);
@@ -42,26 +46,29 @@ export default function OrdersPage() {
   };
 
   const handleSave = () => {
-    fetch(`http://localhost:8000/api/sales/sales/${selectedOrder.id}/`, {
+    fetch(`http://localhost:8000/api/sales/sales/${selectedOrder.id}/update_status/`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ status: selectedOrder.status }),
+      body: JSON.stringify({
+        status: selectedOrder.status
+      }),
     })
       .then((res) => {
         if (!res.ok) throw new Error('Error al guardar los cambios');
         return res.json();
       })
-      .then((updatedOrder) => {
+      .then((response) => {
         const updated = orders.map((o) =>
-          o.id === updatedOrder.id ? updatedOrder : o
+          o.id === selectedOrder.id ? { ...o, status: selectedOrder.status } : o
         );
         setOrders(updated);
         setOpen(false);
       })
       .catch((err) => console.error(err));
   };
+  
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
@@ -110,31 +117,39 @@ export default function OrdersPage() {
       });
   }, []);
 
-  const cancelarVenta = async (id) => {
+  const cancelarVenta = async (id, reason = "return") => {
     try {
       const res = await fetch(`http://localhost:8000/api/sales/sales/${id}/update_status/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "cancelled" }),
-      })
-
+        body: JSON.stringify({ status: "cancelled", cancel_reason: reason }),
+      });
+  
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || "Error al cancelar venta")
+        const data = await res.json();
+        throw new Error(data.detail || "Error al cancelar venta");
       }
-
-      alert("Venta cancelada")
+  
+      alert("Venta cancelada");
       // Actualizar lista
       setOrders((prev) =>
         prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s))
-      )
+      );
     } catch (err) {
-      console.error("Error:", err)
-      alert("Error al cancelar venta")
+      console.error("Error:", err);
+      alert("Error al cancelar venta");
     }
-  }
+  };
+
+  const handleOpenCancelDialog = (order) => {
+    setOrderToCancel(order);
+    setCancelReason("return"); // valor por defecto
+    setCancelDialogOpen(true);
+  };
+  
+  
 
   return (
     <Grid container spacing={3}>
@@ -193,10 +208,11 @@ export default function OrdersPage() {
                       <Button
                         variant="outlined"
                         color="error"
-                        onClick={() => cancelarVenta(order.id)}
+                        onClick={() => handleOpenCancelDialog(order)}
                       >
                         Cancelar
                       </Button>
+                    
                     )}
 
                   </TableCell>
@@ -250,7 +266,6 @@ export default function OrdersPage() {
                 >
                   <MenuItem value="pending">Pendiente</MenuItem>
                   <MenuItem value="completed">Enviado</MenuItem>
-                  <MenuItem value="cancelled">Cancelado</MenuItem>
                 </Select>
               </FormControl>
 
@@ -265,15 +280,47 @@ export default function OrdersPage() {
             </>
           )}
         </DialogContent>
+        
+
         <DialogActions>
           <Button onClick={handleClose}>Cerrar</Button>
-          {(originalStatus !== 'Cancelled' && originalStatus !== 'Shipped') && (
+          {(originalStatus !== 'cancelled' && originalStatus !== 'completed') && (
             <Button onClick={handleSave} variant="contained">
               Guardar cambios
             </Button>
           )}
         </DialogActions>
       </Dialog>
+      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)}>
+          <DialogTitle>Cancelar orden</DialogTitle>
+          <DialogContent dividers>
+            <Typography>Selecciona el motivo de la cancelación:</Typography>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Motivo</InputLabel>
+              <Select
+                value={cancelReason}
+                label="Motivo"
+                onChange={(e) => setCancelReason(e.target.value)}
+              >
+                <MenuItem value="return">Devolución del cliente</MenuItem>
+                <MenuItem value="error">Cancelación por error</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCancelDialogOpen(false)}>Cerrar</Button>
+            <Button
+              color="error"
+              variant="contained"
+              onClick={async () => {
+                await cancelarVenta(orderToCancel.id, cancelReason);
+                setCancelDialogOpen(false);
+              }}
+            >
+              Confirmar Cancelación
+            </Button>
+          </DialogActions>
+        </Dialog>
     </Grid>
   );
 }
