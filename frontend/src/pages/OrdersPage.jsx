@@ -20,12 +20,7 @@ export default function OrdersPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [orders, setOrders] = useState([
-    { id: 11, client_name: 'Cliente general', date: '2025-06-27T18:29:00', total: 35.00, status: 'pending', tax: 3.50 },
-    { id: 10, client_name: 'Cliente general', date: '2025-06-26T07:23:00', total: 626.40, status: 'pending', tax: 62.64 },
-    { id: 9, client_name: 'Cliente general', date: '2025-06-25T18:26:00', total: 255.20, status: 'completed', tax: 25.52 },
-  ]);
-  
+  const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -35,6 +30,10 @@ export default function OrdersPage() {
   const [dateFilter, setDateFilter] = useState('all');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [originalStatus, setOriginalStatus] = useState('');
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("return");
+  const [orderToCancel, setOrderToCancel] = useState(null);
 
   // Status options with colors
   const statusOptions = [
@@ -60,23 +59,104 @@ export default function OrdersPage() {
     );
   };
 
+  useEffect(() => {
+    fetch('http://localhost:8000/api/sales/sales/')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setOrders(data);
+      })
+      .catch(error => {
+        console.error("Error al obtener órdenes:", error);
+      });
+  }, []);
+
   const handleOpenDetails = (order) => {
-    setSelectedOrder(order);
+    setSelectedOrder({ ...order });
+    setOriginalStatus(order.status);
     setOpen(true);
   };
 
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedOrder(null);
+  };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.client_name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = !statusFilter || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleSave = () => {
+    fetch(`http://localhost:8000/api/sales/sales/${selectedOrder.id}/update_status/`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        status: selectedOrder.status
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Error al guardar los cambios');
+        return res.json();
+      })
+      .then((response) => {
+        const updated = orders.map((o) =>
+          o.id === selectedOrder.id ? { ...o, status: selectedOrder.status } : o
+        );
+        setOrders(updated);
+        setOpen(false);
+      })
+      .catch((err) => console.error(err));
+  };
 
-  const paginatedOrders = filteredOrders.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(0);
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setPage(0);
+  };
+
+  const handleChangePage = (_, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (e) => {
+    setRowsPerPage(parseInt(e.target.value, 10));
+    setPage(0);
+  };
+
+  const cancelarVenta = async (id, reason = "return") => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/sales/sales/${id}/update_status/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "cancelled", cancel_reason: reason }),
+      });
+  
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Error al cancelar venta");
+      }
+  
+      alert("Venta cancelada");
+      setOrders((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s))
+      );
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Error al cancelar venta");
+    }
+  };
+
+  const handleOpenCancelDialog = (order) => {
+    setOrderToCancel(order);
+    setCancelReason("return");
+    setCancelDialogOpen(true);
+  };
 
   const resetFilters = () => {
     setSearch('');
@@ -86,6 +166,17 @@ export default function OrdersPage() {
     setEndDate(null);
     setPage(0);
   };
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.client_name?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = !statusFilter || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const paginatedOrders = filteredOrders.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -159,7 +250,7 @@ export default function OrdersPage() {
                 fullWidth
                 label="Buscar cliente"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearchChange}
                 size="small"
                 InputProps={{
                   startAdornment: <Search fontSize="small" sx={{ mr: 1 }} />,
@@ -173,7 +264,7 @@ export default function OrdersPage() {
                 <Select
                   value={statusFilter}
                   label="Estado"
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={handleStatusFilterChange}
                 >
                   <MenuItem value="">Todos</MenuItem>
                   {statusOptions.map((option) => (
@@ -255,7 +346,7 @@ export default function OrdersPage() {
                     <TableCell>
                       {format(new Date(order.date), isMobile ? 'dd/MM' : 'dd/MM/yyyy HH:mm')}
                     </TableCell>
-                    {!isMobile && <TableCell>${order.total.toFixed(2)}</TableCell>}
+                    {!isMobile && <TableCell>${parseFloat(order.total).toFixed(2)}</TableCell>}
                     <TableCell>{getStatusChip(order.status)}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -271,12 +362,23 @@ export default function OrdersPage() {
                         {order.status === 'pending' && (
                           <>
                             <Tooltip title="Completar orden">
-                              <IconButton size="small" color="success">
+                              <IconButton 
+                                size="small" 
+                                color="success"
+                                onClick={() => {
+                                  setSelectedOrder({...order, status: 'completed'});
+                                  handleSave();
+                                }}
+                              >
                                 <CheckCircle fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Cancelar orden">
-                              <IconButton size="small" color="error">
+                              <IconButton 
+                                size="small" 
+                                color="error"
+                                onClick={() => handleOpenCancelDialog(order)}
+                              >
                                 <Cancel fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -296,11 +398,8 @@ export default function OrdersPage() {
             count={filteredOrders.length}
             rowsPerPage={rowsPerPage}
             page={page}
-            onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setPage(0);
-            }}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
             labelRowsPerPage="Órdenes por página"
             labelDisplayedRows={({ from, to, count }) =>
               `${from}-${to} de ${count}`
@@ -333,11 +432,13 @@ export default function OrdersPage() {
                     <strong>Fecha:</strong> {format(new Date(selectedOrder.date), 'PPPPpppp')}
                   </Typography>
                   <Typography>
-                    <strong>Total:</strong> ${selectedOrder.total.toFixed(2)}
+                    <strong>Total:</strong> ${parseFloat(selectedOrder.total).toFixed(2)}
                   </Typography>
-                  <Typography>
-                    <strong>Impuesto:</strong> ${selectedOrder.tax.toFixed(2)}
-                  </Typography>
+                  {selectedOrder.tax && (
+                    <Typography>
+                      <strong>Impuesto:</strong> ${parseFloat(selectedOrder.tax).toFixed(2)}
+                    </Typography>
+                  )}
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle1" gutterBottom>
@@ -352,6 +453,7 @@ export default function OrdersPage() {
                         ...selectedOrder,
                         status: e.target.value
                       })}
+                      disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'completed'}
                     >
                       {statusOptions.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
@@ -361,22 +463,63 @@ export default function OrdersPage() {
                     </Select>
                   </FormControl>
                 </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Artículos
+                  </Typography>
+                  <ul>
+                    {selectedOrder.items?.map((item, idx) => (
+                      <li key={idx}>
+                        {item.product_name} x{item.quantity}
+                      </li>
+                    ))}
+                  </ul>
+                </Grid>
               </Grid>
             )}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cerrar</Button>
-            <Button onClick={handleClose} variant="contained" color="primary">
-              Guardar
+            {(originalStatus !== 'cancelled' && originalStatus !== 'completed') && (
+              <Button onClick={handleSave} variant="contained" color="primary">
+                Guardar cambios
+              </Button>
+            )}
+          </DialogActions>
+        </Dialog>
+
+        {/* Cancel Order Dialog */}
+        <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)}>
+          <DialogTitle>Cancelar orden</DialogTitle>
+          <DialogContent dividers>
+            <Typography>Selecciona el motivo de la cancelación:</Typography>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Motivo</InputLabel>
+              <Select
+                value={cancelReason}
+                label="Motivo"
+                onChange={(e) => setCancelReason(e.target.value)}
+              >
+                <MenuItem value="return">Devolución del cliente</MenuItem>
+                <MenuItem value="error">Cancelación por error</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCancelDialogOpen(false)}>Cerrar</Button>
+            <Button
+              color="error"
+              variant="contained"
+              onClick={async () => {
+                await cancelarVenta(orderToCancel.id, cancelReason);
+                setCancelDialogOpen(false);
+              }}
+            >
+              Confirmar Cancelación
             </Button>
           </DialogActions>
         </Dialog>
       </Box>
-    </LocalizationProvider>
-  );
-  return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      {/* Your JSX remains the same */}
     </LocalizationProvider>
   );
 }
