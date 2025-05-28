@@ -44,11 +44,6 @@ const NAVIGATION = [
     icon: <Inventory />
   },
   {
-    segment: 'categories',
-    title: 'Categories',
-    icon: <Category />
-  },
-  {
     kind: 'divider',
   },
   {

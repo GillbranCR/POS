@@ -1,93 +1,75 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Grid, Paper, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, Select, MenuItem, InputLabel, FormControl, TextField,
-  TablePagination, Box, Chip
+  TablePagination, Box, Chip, Stack, IconButton, Tooltip,
+  Card, CardContent, useMediaQuery, useTheme
 } from '@mui/material';
+import {
+  Search, Refresh, Cancel, CheckCircle, Print, Download,
+  Receipt, FilterAlt
+} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format } from 'date-fns';
 
 export default function OrdersPage() {
-  const [orders, setOrders] = React.useState([]);
-  const [selectedOrder, setSelectedOrder] = React.useState(null);
-  const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('');
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [originalStatus, setOriginalStatus] = React.useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
+  const [orders, setOrders] = useState([
+    { id: 11, client_name: 'Cliente general', date: '2025-06-27T18:29:00', total: 35.00, status: 'pending', tax: 3.50 },
+    { id: 10, client_name: 'Cliente general', date: '2025-06-26T07:23:00', total: 626.40, status: 'pending', tax: 62.64 },
+    { id: 9, client_name: 'Cliente general', date: '2025-06-25T18:26:00', total: 255.20, status: 'completed', tax: 25.52 },
+  ]);
+  
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [dateFilter, setDateFilter] = useState('all');
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+
+  // Status options with colors
+  const statusOptions = [
+    { value: 'pending', label: 'Pendiente', color: 'warning' },
+    { value: 'completed', label: 'Completado', color: 'success' },
+    { value: 'cancelled', label: 'Cancelado', color: 'error' }
+  ];
+
+  // Calculate stats
+  const stats = {
+    total: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    completed: orders.filter(o => o.status === 'completed').length,
+    cancelled: orders.filter(o => o.status === 'cancelled').length
+  };
 
   const getStatusChip = (status) => {
-    switch (status) {
-      case 'pending':
-        return <Chip label="Pendiente" color="warning" />;
-      case 'completed':
-        return <Chip label="Enviado" color="success" />;
-      case 'cancelled':
-        return <Chip label="Cancelado" color="error" />;
-      default:
-        return <Chip label={status || 'Desconocido'} />;
-    }
+    const option = statusOptions.find(opt => opt.value === status);
+    return option ? (
+      <Chip label={option.label} color={option.color} size="small" />
+    ) : (
+      <Chip label={status || 'Desconocido'} size="small" />
+    );
   };
 
   const handleOpenDetails = (order) => {
-    setSelectedOrder({ ...order });
-    setOriginalStatus(order.status);
+    setSelectedOrder(order);
     setOpen(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedOrder(null);
-  };
+  const handleClose = () => setOpen(false);
 
-  const handleSave = () => {
-    fetch(`http://localhost:8000/api/sales/sales/${selectedOrder.id}/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: selectedOrder.status }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al guardar los cambios');
-        return res.json();
-      })
-      .then((updatedOrder) => {
-        const updated = orders.map((o) =>
-          o.id === updatedOrder.id ? updatedOrder : o
-        );
-        setOrders(updated);
-        setOpen(false);
-      })
-      .catch((err) => console.error(err));
-  };
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(0);
-  };
-
-  const handleStatusFilterChange = (e) => {
-    setStatusFilter(e.target.value);
-    setPage(0);
-  };
-
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (e) => {
-    setRowsPerPage(parseInt(e.target.value, 10));
-    setPage(0);
-  };
-
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.client_name
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesStatus =
-      !statusFilter || order.status === statusFilter;
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.client_name.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = !statusFilter || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -96,189 +78,305 @@ export default function OrdersPage() {
     page * rowsPerPage + rowsPerPage
   );
 
-  useEffect(() => {
-    fetch('http://localhost:8000/api/sales/sales/')
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        setOrders(data);
-      })
-      .catch(error => {
-        console.error("Error al obtener órdenes:", error);
-      });
-  }, []);
-
-  const cancelarVenta = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/sales/sales/${id}/update_status/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "cancelled" }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || "Error al cancelar venta")
-      }
-
-      alert("Venta cancelada")
-      // Actualizar lista
-      setOrders((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s))
-      )
-    } catch (err) {
-      console.error("Error:", err)
-      alert("Error al cancelar venta")
-    }
-  }
+  const resetFilters = () => {
+    setSearch('');
+    setStatusFilter('');
+    setDateFilter('all');
+    setStartDate(null);
+    setEndDate(null);
+    setPage(0);
+  };
 
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Box display='flex' gap={2} mb={2}>
-          <TextField
-            label="Buscar por cliente"
-            variant="outlined"
-            value={search}
-            onChange={handleSearchChange}
-          />
-          <FormControl sx={{ minWidth: 160 }}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              value={statusFilter}
-              label="Estado"
-              onChange={handleStatusFilterChange}
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Box sx={{ p: isMobile ? 1 : 3 }}>
+        {/* Stats Cards - Responsive layout */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Total Órdenes
+                </Typography>
+                <Typography variant="h5">{stats.total}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Pendientes
+                </Typography>
+                <Typography variant="h5" color="warning.main">
+                  {stats.pending}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Completadas
+                </Typography>
+                <Typography variant="h5" color="success.main">
+                  {stats.completed}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Canceladas
+                </Typography>
+                <Typography variant="h5" color="error.main">
+                  {stats.cancelled}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Filter Section */}
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Stack direction={isMobile ? 'column' : 'row'} spacing={2} alignItems="center" mb={2}>
+            <Typography variant="h6">Filtros</Typography>
+            <Button
+              startIcon={<Refresh />}
+              onClick={() => window.location.reload()}
+              size={isMobile ? 'small' : 'medium'}
             >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="Pending">Pendiente</MenuItem>
-              <MenuItem value="Shipped">Enviado</MenuItem>
-              <MenuItem value="Cancelled">Cancelado</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+              ACTUALIZAR
+            </Button>
+          </Stack>
 
-        <TableContainer component={Paper} sx={{ width: 1100 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Fecha</TableCell>
-                <TableCell>Total</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedOrders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.client_name}</TableCell>
-                  <TableCell>{order.date}</TableCell>
-                  <TableCell>${parseFloat(order.total).toFixed(2)}</TableCell>
-                  <TableCell>{getStatusChip(order.status)}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleOpenDetails(order)}
-                      sx={{ mr: 1 }}
-                    >
-                      Ver Detalles
-                    </Button>
-                    {order.status !== 'cancelled' && order.status !== 'completed' && (
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => cancelarVenta(order.id)}
-                      >
-                        Cancelar
-                      </Button>
-                    )}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                label="Buscar cliente"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                size="small"
+                InputProps={{
+                  startAdornment: <Search fontSize="small" sx={{ mr: 1 }} />,
+                }}
+              />
+            </Grid>
 
-                  </TableCell>
-
-                </TableRow>
-              ))}
-              {paginatedOrders.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No se encontraron órdenes.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          <TablePagination
-            component="div"
-            count={filteredOrders.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Órdenes por página"
-          />
-        </TableContainer>
-      </Grid>
-
-      {/* Modal */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle>Detalles del pedido</DialogTitle>
-        <DialogContent dividers>
-          {selectedOrder && (
-            <>
-              <Typography>ID: {selectedOrder.id}</Typography>
-              <Typography>Cliente: {selectedOrder.client_name}</Typography>
-              <Typography>Fecha: {selectedOrder.date}</Typography>
-              <Typography>Total: ${parseFloat(selectedOrder.total).toFixed(2)}</Typography>
-
-              <FormControl fullWidth sx={{ mt: 2 }}>
+            <Grid item xs={12} sm={6} md={4}>
+              <FormControl fullWidth size="small">
                 <InputLabel>Estado</InputLabel>
                 <Select
-                  value={selectedOrder.status || ''}
+                  value={statusFilter}
                   label="Estado"
-                  onChange={(e) =>
-                    setSelectedOrder({
-                      ...selectedOrder,
-                      status: e.target.value,
-                    })
-                  }
-                  disabled={selectedOrder.status === 'cancelled' || selectedOrder.status === 'completed'}
+                  onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                  <MenuItem value="pending">Pendiente</MenuItem>
-                  <MenuItem value="completed">Enviado</MenuItem>
-                  <MenuItem value="cancelled">Cancelado</MenuItem>
+                  <MenuItem value="">Todos</MenuItem>
+                  {statusOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
+            </Grid>
 
-              <Typography sx={{ mt: 3 }}>Artículos:</Typography>
-              <ul>
-                {selectedOrder.items?.map((item, idx) => (
-                  <li key={idx}>
-                    {item.product_name} x{item.quantity}
-                  </li>
+            <Grid item xs={12} sm={6} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Rango de fechas</InputLabel>
+                <Select
+                  value={dateFilter}
+                  label="Rango de fechas"
+                  onChange={(e) => setDateFilter(e.target.value)}
+                >
+                  <MenuItem value="all">Todos</MenuItem>
+                  <MenuItem value="today">Hoy</MenuItem>
+                  <MenuItem value="week">Esta semana</MenuItem>
+                  <MenuItem value="month">Este mes</MenuItem>
+                  <MenuItem value="custom">Personalizado</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                onClick={resetFilters}
+                startIcon={<FilterAlt />}
+                size="small"
+              >
+                LIMPIAR FILTROS
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Orders Table */}
+        <Paper sx={{ p: 2 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6">
+              Órdenes ({filteredOrders.length})
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Imprimir">
+                <IconButton size="small">
+                  <Print fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Exportar">
+                <IconButton size="small">
+                  <Download fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          </Box>
+
+          <TableContainer>
+            <Table size={isMobile ? 'small' : 'medium'}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  {!isMobile && <TableCell>Cliente</TableCell>}
+                  <TableCell>Fecha</TableCell>
+                  {!isMobile && <TableCell>Total</TableCell>}
+                  <TableCell>Estado</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedOrders.map((order) => (
+                  <TableRow key={order.id} hover>
+                    <TableCell>{order.id}</TableCell>
+                    {!isMobile && <TableCell>{order.client_name}</TableCell>}
+                    <TableCell>
+                      {format(new Date(order.date), isMobile ? 'dd/MM' : 'dd/MM/yyyy HH:mm')}
+                    </TableCell>
+                    {!isMobile && <TableCell>${order.total.toFixed(2)}</TableCell>}
+                    <TableCell>{getStatusChip(order.status)}</TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Tooltip title="Ver detalles">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDetails(order)}
+                          >
+                            <Receipt fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        
+                        {order.status === 'pending' && (
+                          <>
+                            <Tooltip title="Completar orden">
+                              <IconButton size="small" color="success">
+                                <CheckCircle fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Cancelar orden">
+                              <IconButton size="small" color="error">
+                                <Cancel fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </ul>
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cerrar</Button>
-          {(originalStatus !== 'Cancelled' && originalStatus !== 'Shipped') && (
-            <Button onClick={handleSave} variant="contained">
-              Guardar cambios
+              </TableBody>
+            </Table>
+          </TableContainer>
+          
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredOrders.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            labelRowsPerPage="Órdenes por página"
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} de ${count}`
+            }
+          />
+        </Paper>
+
+        {/* Order Details Dialog */}
+        <Dialog 
+          open={open} 
+          onClose={handleClose} 
+          fullWidth 
+          maxWidth={isMobile ? 'sm' : 'md'}
+          fullScreen={isMobile}
+        >
+          <DialogTitle>
+            Orden #{selectedOrder?.id}
+          </DialogTitle>
+          <DialogContent dividers>
+            {selectedOrder && (
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Información del Cliente
+                  </Typography>
+                  <Typography>
+                    <strong>Cliente:</strong> {selectedOrder.client_name}
+                  </Typography>
+                  <Typography>
+                    <strong>Fecha:</strong> {format(new Date(selectedOrder.date), 'PPPPpppp')}
+                  </Typography>
+                  <Typography>
+                    <strong>Total:</strong> ${selectedOrder.total.toFixed(2)}
+                  </Typography>
+                  <Typography>
+                    <strong>Impuesto:</strong> ${selectedOrder.tax.toFixed(2)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Estado
+                  </Typography>
+                  <FormControl fullWidth sx={{ mt: 1 }}>
+                    <InputLabel>Estado</InputLabel>
+                    <Select
+                      value={selectedOrder.status}
+                      label="Estado"
+                      onChange={(e) => setSelectedOrder({
+                        ...selectedOrder,
+                        status: e.target.value
+                      })}
+                    >
+                      {statusOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cerrar</Button>
+            <Button onClick={handleClose} variant="contained" color="primary">
+              Guardar
             </Button>
-          )}
-        </DialogActions>
-      </Dialog>
-    </Grid>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </LocalizationProvider>
+  );
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      {/* Your JSX remains the same */}
+    </LocalizationProvider>
   );
 }
-
-
-
-
-

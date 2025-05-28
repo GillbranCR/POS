@@ -8,10 +8,12 @@ import {
     Stack,
   } from "@mui/material"
   import { PlusCircle, Receipt, BarChart, Tag } from "lucide-react"
-  
+  import SalesPage from "../pages/SalesPage"
+  import ReportesPage from "../pages/ReportsPage"
+ 
   export default function QuickActions() {
     const actions = [
-      { label: "New Sale", icon: <PlusCircle size={32} />, variant: "contained" },
+      { label: "New Sale", icon: <PlusCircle size={32} />, variant: "contained"},
       { label: "Receipts", icon: <Receipt size={32} />, variant: "outlined" },
       { label: "Reports", icon: <BarChart size={32} />, variant: "outlined" },
       { label: "Discounts", icon: <Tag size={32} />, variant: "outlined" },

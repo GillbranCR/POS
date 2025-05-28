@@ -199,6 +199,9 @@ const SuppliersPage = () => {
                 <TableRow>
                   <TableCell>Nombre</TableCell>
                   <TableCell>Contacto</TableCell>
+                  <TableCell>Telefono</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Direccion</TableCell>
                   <TableCell>Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -207,6 +210,9 @@ const SuppliersPage = () => {
                   <TableRow key={s.id}>
                     <TableCell>{s.name}</TableCell>
                     <TableCell>{s.contact_person}</TableCell>
+                    <TableCell>{s.phone}</TableCell>
+                    <TableCell>{s.email}</TableCell>
+                    <TableCell>{s.adress}</TableCell>
                     <TableCell>
                       <Button size="small" onClick={() => handleOpenForm(s)}>Editar</Button>
                       <Button size="small" color="error" onClick={() => handleDeleteSupplier(s.id)}>Eliminar</Button>
