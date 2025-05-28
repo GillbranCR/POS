@@ -50,15 +50,6 @@ export default function OrdersPage() {
     cancelled: orders.filter(o => o.status === 'cancelled').length
   };
 
-  const getStatusChip = (status) => {
-    const option = statusOptions.find(opt => opt.value === status);
-    return option ? (
-      <Chip label={option.label} color={option.color} size="small" />
-    ) : (
-      <Chip label={status || 'Desconocido'} size="small" />
-    );
-  };
-
   useEffect(() => {
     fetch('http://localhost:8000/api/sales/sales/')
       .then(res => {
@@ -72,6 +63,15 @@ export default function OrdersPage() {
         console.error("Error al obtener órdenes:", error);
       });
   }, []);
+
+  const getStatusChip = (status) => {
+    const option = statusOptions.find(opt => opt.value === status);
+    return option ? (
+      <Chip label={option.label} color={option.color} size="small" />
+    ) : (
+      <Chip label={status || 'Desconocido'} size="small" />
+    );
+  };
 
   const handleOpenDetails = (order) => {
     setSelectedOrder({ ...order });
