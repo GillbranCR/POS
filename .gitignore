@@ -1,1 +1,47 @@
-/venv
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Cache y compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Paquetes y builds de Python
+*.egg-info/
+*.egg
+dist/
+build/
+pip-wheel-metadata/
+
+# Base de datos SQLite (desarrollo)
+*.sqlite3
+*.db
+
+# Variables de entorno
+.env
+.env.local
+*.env
+
+# Docker (opcional)
+docker-compose.override.yml
+
+# Archivos estáticos y media (se generan automáticamente)
+/staticfiles/
+/mediafiles/
+
+# Logs y temporales
+*.log
+*.pot
+*.pyc
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
