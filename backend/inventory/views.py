@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from .models import Product, Category
-from .serializers import ProductSerializer, CategorySerializer
+from .models import Product, Category, StockMovement
+from .serializers import ProductSerializer, CategorySerializer, StockMovementSerializer
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -20,3 +20,9 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+
+
+class StockMovementViewSet(viewsets.ModelViewSet):
+    queryset = StockMovement.objects.all().order_by('-date')
+    serializer_class = StockMovementSerializer

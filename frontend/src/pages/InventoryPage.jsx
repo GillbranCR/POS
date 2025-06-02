@@ -19,6 +19,8 @@ import {
 } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete"
 import AddIcon from "@mui/icons-material/Add"
+import HistoryIcon from "@mui/icons-material/History"
+
 
 export default function InventoryPage({ router }) {
 
@@ -32,6 +34,20 @@ export default function InventoryPage({ router }) {
   })
   const API_URL = "http://localhost:8000/api/inventory/products/"  // Ajusta si es necesario
 
+  const [showHistory, setShowHistory] = useState(false)
+  const [stockMovements, setStockMovements] = useState([])
+
+  const fetchStockMovements = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/inventory/stock_movements/")
+      const data = await res.json()
+      console.log("Movimientos:", data)
+      setStockMovements(data)
+    } catch (err) {
+      console.error("Error al cargar historial de movimientos:", err)
+    }
+  }
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,10 +74,6 @@ export default function InventoryPage({ router }) {
     fetchCategories()
   }, [])
 
-  
-  
-  
-
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.price || !newProduct.category || !newProduct.stock) return
   
@@ -74,26 +86,46 @@ export default function InventoryPage({ router }) {
           price: parseFloat(newProduct.price),
           stock: parseInt(newProduct.stock),
           category: parseInt(newProduct.category),
-          image_url: newProduct.image_url,
+          image_url: newProduct.image,
           sku: newProduct.sku,
         }),
       })
       const savedProduct = await res.json()
       setInventory(prev => [...prev, savedProduct])
-      setNewProduct({ name: "", price: "", category: "", stock: "", image: "" })
+      setNewProduct({ name: "", price: "", category: "", stock: "", image: "", sku: "" })
+  
+      // ⬇️ Registrar restock
+      await registerStockMovement({
+        productId: savedProduct.id,
+        type: "restock",
+        quantity: savedProduct.stock,
+        reason: "Producto agregado al inventario",
+      })
+  
     } catch (err) {
       console.error("Error al agregar producto:", err)
     }
   }
-  
-  
-  
 
   const handleDelete = async (id) => {
+    const product = inventory.find((item) => item.id === id)
+    if (!product) {
+      console.error("Producto no encontrado en el estado")
+      return
+    }
+  
     try {
+      await registerStockMovement({
+        productId: id,
+        type: "correction",
+        quantity: -product.stock,
+        reason: "Eliminación del producto",
+      })
+  
       await fetch(`http://localhost:8000/api/inventory/products/${id}/`, {
         method: "DELETE",
       })
+  
       setInventory((prev) => prev.filter((item) => item.id !== id))
     } catch (error) {
       console.error("Error al eliminar producto:", error)
@@ -101,10 +133,16 @@ export default function InventoryPage({ router }) {
     }
   }
   
+  
 
   const handleUpdateStock = async (id, newStock) => {
     try {
       const updatedStock = parseInt(newStock)
+  
+      const oldStock = inventory.find(item => item.id === id)?.stock ?? 0
+      const diff = updatedStock - oldStock
+      if (diff === 0) return // No hay cambio
+  
       await fetch(`http://localhost:8000/api/inventory/products/${id}/`, {
         method: "PATCH",
         headers: {
@@ -118,9 +156,38 @@ export default function InventoryPage({ router }) {
           item.id === id ? { ...item, stock: updatedStock } : item
         )
       )
+  
+      // ⬇️ Registrar corrección
+      await registerStockMovement({
+        productId: id,
+        type: "correction",
+        quantity: diff,
+        reason: "Actualización manual de stock",
+      })
+  
     } catch (error) {
       console.error("Error al actualizar stock:", error)
       alert("No se pudo actualizar el stock.")
+    }
+  }
+  
+  
+  const registerStockMovement = async ({ productId, type, quantity, reason = "" }) => {
+    try {
+      await fetch("http://localhost:8000/api/inventory/stock_movements/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          product: productId,
+          type,
+          quantity,
+          reason,
+        }),
+      })
+    } catch (err) {
+      console.error("Error al registrar movimiento de stock:", err)
     }
   }
   
@@ -137,7 +204,17 @@ export default function InventoryPage({ router }) {
           >
             Crear nueva categoría
           </Button>
-
+          <Button
+          variant="outlined"
+          startIcon={<HistoryIcon />}
+          sx={{ mb: 2, ml: 2 }}
+          onClick={() => {
+            if (!showHistory) fetchStockMovements()
+            setShowHistory(!showHistory)
+          }}
+        >
+          {showHistory ? "Ocultar historial" : "Ver historial"}
+        </Button>
           <Grid container spacing={6}>
             <Grid item xs={3}>
               <TextField
@@ -247,7 +324,38 @@ export default function InventoryPage({ router }) {
               ))}
             </TableBody>
           </Table>
+
+          
         </Paper>
+        {showHistory && (
+            <Paper sx={{ p: 2, mt: 4 }}>
+              <h3>Historial de movimientos de stock</h3>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Producto</TableCell>
+                    <TableCell>Tipo</TableCell>
+                    <TableCell>Cantidad</TableCell>
+                    <TableCell>Razón</TableCell>
+                    <TableCell>Fecha</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {stockMovements.map((mov) => (
+                    <TableRow key={mov.id}>
+                      <TableCell>{mov.product_name || mov.product}</TableCell>
+                      <TableCell>{mov.type}</TableCell>
+                      <TableCell>{mov.quantity}</TableCell>
+                      <TableCell>{mov.reason || "-"}</TableCell>
+                      <TableCell>{new Date(mov.date).toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
+
+
       </Container>
     </Box>
   )

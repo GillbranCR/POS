@@ -94,33 +94,6 @@ const SalesPage = () => {
   const tax = subtotal * 0.16
   const total = subtotal + tax
 
-  const finalizarCompra = async () => {
-    try {
-      for (const item of cart) {
-        const newStock = item.product.stock - item.quantity
-
-        await fetch(`http://localhost:8000/api/inventory/products/${item.product.id}/`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ stock: newStock }),
-        })
-      }
-
-      alert("¡Compra realizada!")
-      clearCart()
-
-      // Recargar productos desde el backend con el stock actualizado
-      const res = await fetch("http://localhost:8000/api/inventory/products/")
-      const updated = await res.json()
-      setProducts(updated)
-    } catch (error) {
-      console.error("Error al finalizar la compra:", error)
-      alert("Ocurrió un error al procesar la compra.")
-    }
-  }
-
   const submitSale = async () => {
     const saleData = {
       client_name: "Cliente general", // Puedes cambiarlo si quieres un input luego

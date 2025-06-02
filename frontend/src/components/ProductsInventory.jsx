@@ -7,12 +7,13 @@ import {
   Chip,
   Divider,
   Stack,
+  Pagination,
 } from "@mui/material"
 import axios from "axios"
 
 const getStatus = (stock) => {
   if (stock === 0) return "out-of-stock"
-  if (stock < 5) return "low-stock"
+  if (stock < 30) return "low-stock"
   return "in-stock"
 }
 
@@ -31,6 +32,8 @@ const getStatusColor = (status) => {
 
 export default function ProductsInventory() {
   const [products, setProducts] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 4
 
   useEffect(() => {
     axios.get("http://localhost:8000/api/inventory/products/")
@@ -46,6 +49,16 @@ export default function ProductsInventory() {
       })
   }, [])
 
+  const pageCount = Math.ceil(products.length / itemsPerPage)
+  const paginatedProducts = products.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value)
+  }
+
   return (
     <Card>
       <CardHeader
@@ -55,7 +68,7 @@ export default function ProductsInventory() {
       <Divider />
       <CardContent>
         <Stack spacing={2}>
-          {products.map((product) => (
+          {paginatedProducts.map((product) => (
             <Stack
               key={product.id}
               direction="row"
@@ -83,8 +96,21 @@ export default function ProductsInventory() {
               />
             </Stack>
           ))}
+
+          {/* Paginación al final */}
+          {pageCount > 1 && (
+            <Pagination
+              count={pageCount}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              size="small"
+              sx={{ alignSelf: "center", mt: 2 }}
+            />
+          )}
         </Stack>
       </CardContent>
     </Card>
   )
 }
+
