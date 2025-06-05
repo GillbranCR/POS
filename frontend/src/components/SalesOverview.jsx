@@ -8,7 +8,7 @@ import {
   CircularProgress,
 } from "@mui/material"
 import { DollarSign, ShoppingBag, Users, TrendingUp } from "lucide-react"
-import axios from "axios"
+import axios from "../services/axiosConfig";
 
 export default function SalesOverview() {
   const [loading, setLoading] = useState(true)
@@ -37,27 +37,27 @@ export default function SalesOverview() {
 
   const cardData = [
     {
-      title: "Total Revenue",
+      title: "Ganancia total",
       value: `$${data.total_revenue.toLocaleString()}`,
-      description: `${data.revenue_change >= 0 ? "+" : ""}${data.revenue_change}% from last month`,
+      description: `${data.revenue_change >= 0 ? "+" : ""}${data.revenue_change}% respecto mes pasado`,
       icon: <DollarSign size={18} style={{ color: "#6b7280" }} />,
     },
     {
-      title: "Sales",
+      title: "Ventas",
       value: `+${data.sales_count}`,
-      description: `${data.sales_change >= 0 ? "+" : ""}${data.sales_change}% from last month`,
+      description: `${data.sales_change >= 0 ? "+" : ""}${data.sales_change}% respecto mes pasado`,
       icon: <ShoppingBag size={18} style={{ color: "#6b7280" }} />,
     },
     {
-      title: "Active Customers",
+      title: "Clientes activos",
       value: `+${data.active_customers}`,
-      description: `${data.customers_change >= 0 ? "+" : ""}${data.customers_change}% from last month`,
+      description: `${data.customers_change >= 0 ? "+" : ""}${data.customers_change}% respecto mes pasado`,
       icon: <Users size={18} style={{ color: "#6b7280" }} />,
     },
     {
-      title: "Conversion Rate",
+      title: "Tasa de conversión",
       value: `${data.conversion_rate}%`,
-      description: `${data.conversion_change >= 0 ? "+" : ""}${data.conversion_change}% from last month`,
+      description: `${data.conversion_change >= 0 ? "+" : ""}${data.conversion_change}% respecto mes pasado`,
       icon: <TrendingUp size={18} style={{ color: "#6b7280" }} />,
     },
   ]

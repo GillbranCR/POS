@@ -1,5 +1,5 @@
 import * as React from 'react';
-import axios from 'axios';
+import axios from '../services/axiosConfig';
 import { useEffect, useState } from "react"
 import { createTheme, styled } from '@mui/material/styles';
 import { Dashboard } from '@mui/icons-material';
@@ -61,11 +61,6 @@ const NAVIGATION = [
       {
         segment: 'sales',
         title: 'Ventas',
-        icon: <Description />,
-      },
-      {
-        segment: 'traffic',
-        title: 'Traffic',
         icon: <Description />,
       },
     ],

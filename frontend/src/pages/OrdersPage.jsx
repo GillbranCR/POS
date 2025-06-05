@@ -259,7 +259,7 @@ export default function OrdersPage() {
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth size="small" sx={{minWidth: 100}}>
                 <InputLabel>Estado</InputLabel>
                 <Select
                   value={statusFilter}
@@ -277,7 +277,7 @@ export default function OrdersPage() {
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth size="small" sx={{minWidth: 140}}>
                 <InputLabel>Rango de fechas</InputLabel>
                 <Select
                   value={dateFilter}

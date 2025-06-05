@@ -19,7 +19,7 @@ import DeleteIcon from "@mui/icons-material/Delete"
 const SalesPage = () => {
   const [cart, setCart] = useState([])
   const [categories, setCategories] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState("All")
+  const [selectedCategory, setSelectedCategory] = useState("Todo")
   const [products, setProducts] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -28,7 +28,7 @@ const SalesPage = () => {
       .then((res) => res.json())
       .then((data) => {
         setProducts(data)
-        setCategories(["All", ...new Set(data.map((p) => p.category))])
+        setCategories(["Todo", ...new Set(data.map((p) => p.category))])
       })
       .catch((err) => console.error("Error al cargar productos:", err))
   }, [])
@@ -82,7 +82,7 @@ const SalesPage = () => {
   const clearCart = () => setCart([])
 
   const filteredProducts = products.filter((p) => {
-    const matchCat = selectedCategory === "All" || p.category === selectedCategory
+    const matchCat = selectedCategory === "Todo" || p.category === selectedCategory
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase())
     return matchCat && matchSearch
   })
@@ -146,7 +146,7 @@ const SalesPage = () => {
             <Grid md={4}>
               <TextField
                 fullWidth
-                label="Search Product"
+                label="Buscar producto"
                 variant="outlined"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -158,7 +158,7 @@ const SalesPage = () => {
                   select
                   fullWidth
                   sx={{minWidth: 120}}
-                  label="Category"
+                  label="Categoria"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
@@ -259,7 +259,7 @@ const SalesPage = () => {
               <Divider sx={{ my: 2 }} />
               <Box sx={{ mt: "auto" }}>
                 <Typography>Subtotal: ${subtotal.toFixed(2)}</Typography>
-                <Typography>Taxes (16%): ${tax.toFixed(2)}</Typography>
+                <Typography>Impuestos (16%): ${tax.toFixed(2)}</Typography>
                 <Typography variant="h6">Total: ${total.toFixed(2)}</Typography>
                 <Button
                   variant="contained"

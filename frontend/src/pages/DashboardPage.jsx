@@ -8,7 +8,7 @@ import RecentTransactions from '../components/RecentTransactions';
 export default function DashboardPage( {router} ){
     return (
         <Grid container spacing={3} direction="row" maxWidth="100%">
-            <Grid container spacing={6} direction="row">
+            <Grid container spacing={4} direction="row">
                 <SalesOverview />
                     <Grid container spacing={4} direction="row">
                         <RecentTransactions router={router}/>

@@ -9,7 +9,8 @@ import {
   Stack,
   Pagination,
 } from "@mui/material"
-import axios from "axios"
+import axios from "../services/axiosConfig";
+
 
 const getStatus = (stock) => {
   if (stock === 0) return "out-of-stock"
@@ -62,8 +63,8 @@ export default function ProductsInventory() {
   return (
     <Card>
       <CardHeader
-        title="Inventory Status"
-        subheader="Monitor your product inventory"
+        title="Estatus del inventario"
+        subheader="Monitoreo de inventario"
       />
       <Divider />
       <CardContent>

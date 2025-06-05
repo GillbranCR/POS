@@ -16,7 +16,6 @@ import {
 } from "@mui/material"
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz"
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
 
 export default function RecentTransactions( {router}) {
   const [anchorEls, setAnchorEls] = useState({})
@@ -68,8 +67,8 @@ export default function RecentTransactions( {router}) {
   return (
     <Card>
       <CardHeader
-        title="Recent Transactions"
-        subheader={`Most recent 5 invoices`}
+        title="Transacciones recientes"
+        subheader={`Facturas recientes`}
       />
       <CardContent>
         <Table>
